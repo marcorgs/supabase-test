@@ -1,51 +1,80 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Supabase Test: Institutionen</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f7f7f7; }
-    button { padding: 0.5rem 1rem; font-size: 1rem; margin-bottom: 1rem; }
-    pre { background: #fff; padding: 1rem; border: 1px solid #ddd; }
+    input, button { padding: 0.5rem; font-size: 1rem; margin-bottom: 0.5rem; display: block; }
+    pre { background: #fff; padding: 1rem; border: 1px solid #ddd; white-space: pre-wrap; }
   </style>
 </head>
 <body>
 
- <input type="email" id="email" placeholder="E-Mail" />
-<input type="password" id="password" placeholder="Passwort" />
-<button onclick="login()">Einloggen</button>
-<pre id="status">Nicht eingeloggt</pre>
+  <h1>Supabase Test – Login & Institutionen abrufen</h1>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  <input type="email" id="email" placeholder="E-Mail" />
+  <input type="password" id="password" placeholder="Passwort" />
+  <button id="loginButton">Einloggen</button>
 
-  const supabase = createClient(
-    'https://kgkfnzswaaaxovdhghcw.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtna2ZuenN3YWFheG92ZGhnaGN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMwODI1MTAsImV4cCI6MjA1ODY1ODUxMH0.HH-wKBBdeDpvADi81Cy9RWh8Hed5yat0oHTgYGDmJO8' // dein anon key
-  );
+  <pre id="status">Noch nicht eingeloggt</pre>
+  <pre id="ausgabe">Noch keine Daten geladen...</pre>
 
-  async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const supabase = createClient(
+      'https://kgkfnzswaaaxovdhghcw.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' // dein vollständiger anon key
+    );
 
-    if (error) {
-      document.getElementById('status').textContent = '❌ Fehler: ' + error.message;
-    } else {
+    // Login-Funktion
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        document.getElementById('status').textContent = '❌ Fehler beim Login: ' + error.message;
+        return;
+      }
+
       document.getElementById('status').textContent = '✅ Eingeloggt als: ' + data.user.email;
+
+      // Direkt nach Login Institutionen abrufen
+      ladeInstitutionen();
     }
-  }
 
-  window.login = login;
+    // Daten abrufen
+    async function ladeInstitutionen() {
+      const session = await supabase.auth.getSession();
 
-</script>
+      if (!session.data.session) {
+        document.getElementById('ausgabe').textContent = '⚠️ Nicht eingeloggt.';
+        return;
+      }
 
+      const { data, error } = await supabase
+        .from('institutionen')
+        .select('*');
 
+      if (error) {
+        document.getElementById('ausgabe').textContent = '❌ Fehler beim Laden: ' + error.message;
+      } else {
+        document.getElementById('ausgabe').textContent = JSON.stringify(data, null, 2);
+      }
+    }
 
+    // Login-Funktion global verfügbar machen
+    window.login = login;
+
+    // Oder eleganter: Event Listener
+    document.getElementById('loginButton').addEventListener('click', login);
+  </script>
 
 </body>
 </html>
