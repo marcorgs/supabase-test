@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Supabase Test: Institutionen</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f7f7f7; }
+    button { padding: 0.5rem 1rem; font-size: 1rem; margin-bottom: 1rem; }
+    pre { background: #fff; padding: 1rem; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+  <h1>Supabase Test – Institutionen abrufen</h1>
+  <button onclick="ladeInstitutionen()">Institutionen abrufen</button>
+  <pre id="ausgabe">Noch keine Daten geladen...</pre>
+  
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  
+    const supabase = createClient(
+      'https://kgkfnzswaaaxovdhghcw.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...'
+    );
+  
+    async function ladeInstitutionen() {
+      const session = await supabase.auth.getSession();
+  
+      if (!session.data.session) {
+        document.getElementById('ausgabe').textContent = '⚠️ Nicht eingeloggt.';
+        return;
+      }
+  
+      const { data, error } = await supabase
+        .from('institutionen')
+        .select('*');
+  
+      if (error) {
+        document.getElementById('ausgabe').textContent = '❌ Fehler: ' + error.message;
+      } else {
+        document.getElementById('ausgabe').textContent = JSON.stringify(data, null, 2);
+      }
+    }
+  
+    window.ladeInstitutionen = ladeInstitutionen; // wichtig für Button-Zugriff im HTML
+  
+  </script>
+  
+
+</body>
+</html>
