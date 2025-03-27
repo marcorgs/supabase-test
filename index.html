@@ -16,51 +16,48 @@
   <pre id="ausgabe">Noch keine Daten geladen...</pre>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const supabase = createClient(
-      'https://kgkfnzswaaaxovdhghcw.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...'
-    );
+  const supabase = createClient(
+    'https://kgkfnzswaaaxovdhghcw.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...' // vollständig!
+  );
 
-    // 1. Session aus Magic-Link setzen, wenn Token vorhanden ist
-    const hash = window.location.hash;
-    if (hash.includes('access_token')) {
-      const params = new URLSearchParams(hash.slice(1));
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
+  // ✅ Token setzen + warten bis Supabase es gespeichert hat
+  const hash = window.location.hash;
+  if (hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.slice(1));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
 
-      supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
+    await supabase.auth.setSession({ access_token, refresh_token });
 
-      // URL bereinigen (optional)
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // optional: URL bereinigen
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  async function ladeInstitutionen() {
+    const session = await supabase.auth.getSession();
+
+    if (!session.data.session) {
+      document.getElementById('ausgabe').textContent = '⚠️ Nicht eingeloggt.';
+      return;
     }
 
-    // 2. Daten abrufen
-    async function ladeInstitutionen() {
-      const session = await supabase.auth.getSession();
+    const { data, error } = await supabase
+      .from('institutionen')
+      .select('*');
 
-      if (!session.data.session) {
-        document.getElementById('ausgabe').textContent = '⚠️ Nicht eingeloggt.';
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('institutionen')
-        .select('*');
-
-      if (error) {
-        document.getElementById('ausgabe').textContent = '❌ Fehler: ' + error.message;
-      } else {
-        document.getElementById('ausgabe').textContent = JSON.stringify(data, null, 2);
-      }
+    if (error) {
+      document.getElementById('ausgabe').textContent = '❌ Fehler: ' + error.message;
+    } else {
+      document.getElementById('ausgabe').textContent = JSON.stringify(data, null, 2);
     }
+  }
 
-    window.ladeInstitutionen = ladeInstitutionen;
-  </script>
+  window.ladeInstitutionen = ladeInstitutionen;
+</script>
+
 
 </body>
 </html>
